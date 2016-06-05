@@ -1,6 +1,6 @@
 from antlr4 import *
-from SimpleCLexer import SimpleCLexer
-from SimpleCParser import SimpleCParser
+from parserc.SimpleCLexer import SimpleCLexer
+from parserc.SimpleCParser import SimpleCParser
 import sys
 
 
