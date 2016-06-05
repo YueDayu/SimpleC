@@ -260,7 +260,6 @@ declarator
 
 directDeclarator
     :   Identifier
-    |   '(' declarator ')'
     |   directDeclarator '[' typeQualifierList? assignmentExpression? ']'
     |   directDeclarator '[' 'static' typeQualifierList? assignmentExpression ']'
     |   directDeclarator '[' typeQualifierList 'static' assignmentExpression ']'
@@ -805,11 +804,6 @@ SChar
 
 Define
     :   '#define' Whitespace* ~[\r\n]*
-        -> skip
-    ;
-
-Include
-    :   '#include' Whitespace* ~[\r\n]*
         -> skip
     ;
          
