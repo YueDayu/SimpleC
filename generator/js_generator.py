@@ -1,6 +1,20 @@
 from parserc.SimpleCListener import *
 
 
+function_strlen = """
+function strlen(ch) {\n
+  return ch.length;\n
+}\n"""
+function_printf = """
+function printf(str) {\n
+  if (arguments.length > 1) \n
+    console.log(str, arguments[1]);\n
+  else \n
+    console.log(str);\n
+}\n"""
+function_run = "main(); \n"
+
+
 def get_rule_name(node):
     if hasattr(node, 'getRuleIndex'):
         return SimpleCParser.ruleNames[node.getRuleIndex()]
@@ -48,23 +62,70 @@ class JsGenerator(object):
         """
         self.result += (self.get_space() + node.getText() + ';\n')
 
+    def deal_with_block_item(self, node):
+        new_node = node.children[0]
+        name = get_rule_name(new_node)
+        if name == 'declaration':
+            self.deal_with_declaration(new_node)
+        else:
+            self.deal_with_statement(new_node)
+
+    def deal_with_block_item_list(self, node):
+        if len(node.children) == 1:
+            self.deal_with_block_item(node.children[0])
+        else:
+            self.deal_with_block_item_list(node.children[0])
+            self.deal_with_block_item(node.children[1])
+
     def deal_with_labeled_statement(self, node):
         print('labeledStatement')
 
     def deal_with_compound_statement(self, node): # 大括号语句
-        print('compoundStatement')
+        self.result += '{ \n'
+        if len(node.children) == 3:
+            self.current_layer += 1
+            self.deal_with_block_item_list(node.children[1])
+            self.current_layer -= 1
+        self.result += '} \n'
 
     def deal_with_expression_statement(self, node):
         self.deal_with_expression(node.children[0])
 
     def deal_with_selection_statement(self, node): # if else (else if 是拼凑而成)
-        print('selectionStatement')
+        if str(node.children[0]) == 'if':
+            self.result += 'if ('
+            self.deal_with_inline_expression(node.children[2])
+            self.result += ')'
+            self.deal_with_statement(node.children[4])
+            if len(node.children) > 5:
+                self.result += 'else '
+                self.deal_with_statement(node.children[6])
+        else:
+            print('not support yet')
 
     def deal_with_iteration_statement(self, node): # for & while
-        print('iterationStatement')
+        temp_name = str(node.children[0])
+        if temp_name == 'while':
+            self.result += 'while ('
+            self.deal_with_inline_expression(node.children[2])
+            self.result += ')'
+            self.deal_with_statement(node.children[4])
+        elif temp_name == 'do':
+            print('not support yet')
+        else:
+            self.result += 'for ('
+            i = 2
+            while str(node.children[i]) != ')':
+                if get_rule_name(node.children[i]) == 'expression':
+                    self.deal_with_inline_expression(node.children[i])
+                else:
+                    self.result += '; '
+                i += 1
+            self.result += ')'
+            self.deal_with_statement(node.children[-1])
 
-    def deal_with_jump_statement(self, node): # return
-        print('jumpStatement')
+    def deal_with_jump_statement(self, node):
+        self.result += (self.get_space() + node.getText().replace('return', 'return ') + '\n')
 
     def deal_with_statement(self, node):
         new_node = node.children[0]
@@ -101,10 +162,18 @@ class JsGenerator(object):
         if new_line:
             self.result += ';\n'
 
-
-#TODO
-    def deal_with_function_definition(self, node): # 参照我下边注释掉的代码
-        print('function')
+    def deal_with_function_definition(self, node):
+        self.result += 'function '
+        function_name = node.children[1].children[0].children[0].getText()
+        self.result += function_name
+        self.result += '('
+        declarator_nodes = self.get_all_node('declarator', node.children[1].children[0].children[2])
+        for (i, ctx) in enumerate(declarator_nodes):
+            self.result += ctx.getText().replace('[]', '')
+            if i != len(declarator_nodes) - 1:
+                self.result += ', '
+        self.result += ') '
+        self.deal_with_compound_statement(node.children[-1])
 
     def deal_with_external_declaration(self, node):
         new_node = node.children[0]
@@ -134,101 +203,13 @@ class JsGenerator(object):
             else:
                 print('Error.')
         # add a sys function
-        if self.result.find('strlen') > -1:
-            self.result = 'function strlen(ch) {\n  return ch.len();\n}\n' + self.result
+        # if self.result.find('strlen') > -1:
+        #     self.result = 'function strlen(ch) {\n  return ch.len();\n}\n' + self.result
+        self.result += function_printf
+        self.result += function_strlen
+        self.result += function_run
 
-
-# class JsGenerator(SimpleCListener):
-#     def __init__(self):
-#         self.result = ''
-#         self.parameterNum = -1
-#         self.ExpressNum = 0
-#         self.isDefineStrlen = False
-#         self.currentLevel = 0
-#         self.isShowExpression = 0
-#
-#     def get_space(self):
-#         return '  ' * self.currentLevel
-#
-#     def enterDeclaration(self, ctx):
-#         self.result += (self.get_space() + 'var ')
-#
-#     def enterInitDeclarator(self, ctx):
-#         if len(ctx.children) > 1:
-#             self.result += (ctx.getText() + ', ').replace('[]', '')
-#         else:
-#             if ctx.getText().find('[') > -1:
-#                 node = ctx.children[0].children[0]
-#                 self.result += (node.children[0].getText() + '=new Array(' + node.children[2].getText() + '), ')
-#             else:
-#                 self.result += (ctx.getText() + ', ')
-#
-#         if (not self.isDefineStrlen) and (self.result.find('strlen') > -1):
-#             self.isDefineStrlen = True
-#             self.result = 'function strlen(ch) {\n  return ch.len();\n}\n' + self.result
-#
-#     def exitDeclaration(self, ctx):
-#         self.result = self.result[0:-2]
-#         self.result += ';\n'
-#
-#     def deal_with_express(self, ctx):
-#         self.result += (self.get_space() + ctx.getText())
-#
-#     # def deal_with_statement(self, ctx):
-#
-#
-#     # def enterSelectionStatement(self, ctx):
-#     #     self.result += (self.get_space() + 'if (' + ctx.children[2].getText() + ') {\n')
-#     #     self.currentLevel += 1
-#     #     print(SimpleCParser.ruleNames[ctx.getRuleIndex()])
-#     #     self.result += (self.get_space() + ctx.children[4].getText() + '\n')
-#     #     self.isShowExpression = 1
-#     #
-#     # def exitSelectionStatement(self, ctx):
-#     #     self.currentLevel -= 1
-#     #     self.result += (self.get_space() + '} \n')
-#
-#     # # todo
-#     # def enterExpression(self, ctx):
-#     #     if self.ExpressNum == 0:
-#     #         print(ctx.getText())
-#     #         # self.result += (ctx.getText() + '\n')
-#     #     self.ExpressNum += 1
-#     #
-#     # def exitExpression(self, ctx):
-#     #     self.ExpressNum -= 1
-#
-#     def enterParameterTypeList(self, ctx):
-#         self.parameterNum = 0
-#
-#     def exitParameterTypeList(self, ctx):
-#         self.parameterNum = -1
-#         self.result += ') { \n'
-#
-#     def enterDeclarator(self, ctx):
-#         if self.parameterNum >= 0:
-#             if self.parameterNum >= 1:
-#                 self.result += ', '
-#             self.result += ctx.getText().replace('[]', '')
-#             self.parameterNum += 1
-#
-#     def enterFunctionDefinition(self, ctx):
-#         self.currentLevel += 1
-#         self.result += 'function '
-#         function_name = ctx.children[1].children[0].children[0].getText()
-#         self.result += function_name
-#         self.result += '('
-#         if len(ctx.children[1].children[0].children) < 4:
-#             self.result += ') { \n'
-#
-#     def exitFunctionDefinition(self, ctx):
-#         self.currentLevel -= 1
-#         self.result += '} \n'
-#
-#     def showRes(self):
-#         print(self.result)
-#
-#     def save_to_file(self, filename):
-#         f = open(filename, 'w')
-#         f.write(self.result)
-#         f.close()
+    def save_to_file(self, filename):
+        fout = open(filename, 'w')
+        fout.write(self.result)
+        fout.close()

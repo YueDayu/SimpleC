@@ -806,6 +806,12 @@ Define
     :   '#define' Whitespace* ~[\r\n]*
         -> skip
     ;
+
+Include
+    :   '#include' Whitespace* ~[\r\n]*
+        -> skip
+    ;
+
          
 // ignore the following asm blocks:
 /*
