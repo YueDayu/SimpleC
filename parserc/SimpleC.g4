@@ -172,11 +172,7 @@ typeSpecifier
     |   'float'
     |   'double'
     |   'signed'
-    |   'unsigned'
-    |   atomicTypeSpecifier
-    |   structOrUnionSpecifier
-    |   enumSpecifier
-    |   typedefName)
+    |   'unsigned')
     ;
 
 structOrUnionSpecifier

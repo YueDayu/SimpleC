@@ -95,7 +95,7 @@ function test(ch) {
   printf("%lf\n",getResult(ch_new));
 } 
 function main() { 
-  var ch="1+(5-2)*4/(2+1)";
+  var ch="1+(5-2)*4/(2+3)";
   test(ch);
   return 0;
 } 
