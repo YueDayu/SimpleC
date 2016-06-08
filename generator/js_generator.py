@@ -1,18 +1,16 @@
 from parserc.SimpleCListener import *
 
 
-function_strlen = """
-function strlen(ch) {\n
-  return ch.length;\n
+function_strlen = """function strlen(ch) {
+  return ch.length;
 }\n"""
-function_printf = """
-function printf(str) {\n
-  if (arguments.length > 1) \n
-    console.log(str, arguments[1]);\n
-  else \n
-    console.log(str);\n
+function_printf = """function printf(str) {
+  if (arguments.length > 1)
+    console.log(str, arguments[1]);
+  else
+    console.log(str);
 }\n"""
-function_run = "main(); \n"
+function_run = "main();"
 
 
 def get_rule_name(node):
@@ -86,25 +84,35 @@ class JsGenerator(object):
             self.current_layer += 1
             self.deal_with_block_item_list(node.children[1])
             self.current_layer -= 1
-        self.result += '} \n'
+        self.result += (self.get_space() + '} \n')
 
     def deal_with_expression_statement(self, node):
+        flag = False
+        if len(self.result[self.result.rfind('\n'):].strip()) > 2:
+            self.result += '\n'
+            self.current_layer += 1
+            flag = True
         self.deal_with_expression(node.children[0])
+        if flag:
+            self.current_layer -= 1
 
     def deal_with_selection_statement(self, node): # if else (else if 是拼凑而成)
         if str(node.children[0]) == 'if':
+            if len(self.result[self.result.rfind('\n'):].strip()) < 1:
+                self.result += self.get_space()
             self.result += 'if ('
             self.deal_with_inline_expression(node.children[2])
-            self.result += ')'
+            self.result += ') '
             self.deal_with_statement(node.children[4])
             if len(node.children) > 5:
-                self.result += 'else '
+                self.result += (self.get_space() + 'else ')
                 self.deal_with_statement(node.children[6])
         else:
             print('not support yet')
 
     def deal_with_iteration_statement(self, node): # for & while
         temp_name = str(node.children[0])
+        self.result += self.get_space()
         if temp_name == 'while':
             self.result += 'while ('
             self.deal_with_inline_expression(node.children[2])
@@ -202,9 +210,6 @@ class JsGenerator(object):
                 print('translate finished!')
             else:
                 print('Error.')
-        # add a sys function
-        # if self.result.find('strlen') > -1:
-        #     self.result = 'function strlen(ch) {\n  return ch.len();\n}\n' + self.result
         self.result += function_printf
         self.result += function_strlen
         self.result += function_run
