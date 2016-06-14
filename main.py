@@ -1,5 +1,6 @@
 import parserc.parser_entry as parser
 from generator.js_generator import JsGenerator
+from generator.llvm_generator import LLVMGenerator
 import sys
 from inspectorc.id_inspector import *
 
@@ -11,6 +12,9 @@ if __name__ == '__main__':
         print('Error!')
         print(error_msg)
     else:
-        printer = JsGenerator()
+        if len(sys.argv) <= 3 or sys.argv[2] == 'js':
+            printer = JsGenerator()
+        else:
+            printer = LLVMGenerator()
         printer.deal_with_compilation_unit(tree)
         printer.save_to_file(sys.argv[2])

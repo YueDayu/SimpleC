@@ -3,6 +3,13 @@
 
 char ch_new[1003];
 
+int strlen(char ch[])
+{
+	int i;
+	for (i = 0; ch[i]; i++);
+	return i;
+}
+
 int check1(char x)
 {
 	int p = 0;
@@ -109,7 +116,7 @@ float getResult(char ch[])
 void test(char ch[])
 {
 	ChangeToBehind(ch);
-	printf("%lf\n",getResult(ch_new));
+	printf("%d\n", (int)getResult(ch_new));
 }
 int main()
 {
