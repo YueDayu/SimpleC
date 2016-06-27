@@ -63,7 +63,8 @@ class TreeChecker(SimpleCListener):
             self.paramTable[name] = {}
         if self.current_layer in self.paramTable[name]:
             self.error += 1
-            self.errorMsg += ('existed: ' + name + '\n')
+            line = ctx.start.line
+            self.errorMsg += ('line: ' + str(line) + '; existed: ' + name + '\n')
         else:
             self.paramTable[name][self.current_layer] = True
         if self.function_name_flag == 1:
@@ -75,12 +76,14 @@ class TreeChecker(SimpleCListener):
         if is_id(name) and not name in self.ignored_symbol:
             if name not in self.paramTable:
                 self.error += 1
-                self.errorMsg += ('undeclared identifier: ' + name + '\n')
+                line = ctx.start.line
+                self.errorMsg += ('line: ' + str(line) + '; undeclared identifier: ' + name + '\n')
             else:
                 for i in range(0, self.current_layer):
                     if i in self.paramTable[name] and not self.paramTable[name][i]:
                         self.error += 1
-                        self.errorMsg += ('undeclared identifier: ' + name + '\n')
+                        line = ctx.start.line
+                        self.errorMsg += ('line: ' + str(line) + '; undeclared identifier: ' + name + '\n')
 
 
 def check_tree(tree):
